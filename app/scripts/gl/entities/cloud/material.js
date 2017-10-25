@@ -8,32 +8,108 @@ const Texture2D = require('nanogl/texture')
 const M4 = mat4.create()
 // const SIZE = 64
 
+function perlin3(size) {
+  const n   = []
+  let value = 0
+  let index = 0
+
+  for (let z = 0; z < size; z++) {
+    n[z] = []
+    for (let y = 0; y < size; y++) {
+      n[z][y] = []
+      for (let x = 0; x < size; x++) {
+        // index = z + y * size + x * size * size
+        value = (Math.random() * 32768) / 32768.0
+        // n[ index ] = Math.abs(value) * 256
+        n[z][y][x] = value
+      }
+    }
+  }
+
+  return n
+}
+
+function smoothNoise(noise, x, y, z, size) {
+   //get fractional part of x and y
+   const fractX = x - parseInt(x)
+   const fractY = y - parseInt(y)
+   const fractZ = z - parseInt(z)
+
+   //wrap around
+   const x1 = (parseInt(x) + size) % size
+   const y1 = (parseInt(y) + size) % size
+   const z1 = (parseInt(z) + size) % size
+
+   //neighbor values
+   const x2 = (x1 + size - 1) % size
+   const y2 = (y1 + size - 1) % size
+   const z2 = (z1 + size - 1) % size
+
+   //smooth the noise with bilinear interpolation
+   let value = 0.0
+   value += fractX       * fractY       * fractZ * noise[z1][y1][x1]
+   value += (1 - fractX) * fractY       * fractZ * noise[z1][y1][x1]
+   value += (1 - fractX) * (1 - fractY) * fractZ * noise[z1][y1][x1]
+
+
+   value += (1 - fractX) * (1 - fractY) * fractZ * noise[y1][x2][z2]
+   value += (1 - fractX) * (1 - fractY) * fractZ * noise[y1][x2][z2]
+
+   value += fractX       * (1 - fractY) * noise[y2][x1]
+   value += (1 - fractX) * (1 - fractY) * noise[y2][x2]
+
+   return value
+}
+
+
 function generate( size ) {
 
-  const scale = 0.1
+  const scale = 1
   const data  = new Uint8Array(size * size * size)
-  let value   = 0
 
   const c = 150 / 256
   const s = 0.65
 
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      for (let k = 0; k < size; k++) {
-        value = window.Noises.perlin3( i * scale, j * scale, k * scale )
-        // value *= window.Noises.perlin3( i * scale, j * scale, k * scale )
-        // value *= window.Noises.perlin3( i * scale, j * scale, k * scale )
-        // value *= window.Noises.perlin3( i * scale, j * scale, k * scale )
+  // size = 16
 
-        value = value - c
-        value = 1 - Math.pow(s, value)
+  const noise = perlin3( size )
 
-        value = Math.abs(value) * 256
+  let value = 0
+  let index = 0
 
-        data[ i + j * size + k * size * size ] = value
+  console.log(noise)
+
+  for (let z = 0; z < size; z++) {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        index = z + y * size + x * size * size
+        value = noise[ parseInt(z * scale) ][ parseInt(y * scale) ][ parseInt(x * scale) ]
+        data[ index ] = Math.abs(value) * 256
       }
     }
   }
+
+  // const noise = perlin3( size, size, size, Math.random )
+
+  // for (let i = 0; i < size; i++) {
+  //   for (let j = 0; j < size; j++) {
+  //     for (let k = 0; k < size; k++) {
+  //       value = window.Noises.perlin3( i * scale, j * scale, k * scale )
+  //       // value *= window.Noises.perlin3( i * scale, j * scale, k * scale )
+  //       // value *= window.Noises.perlin3( i * scale, j * scale, k * scale )
+  //       // value *= window.Noises.perlin3( i * scale, j * scale, k * scale )
+
+  //       value = value - c
+  //       value = 1 - Math.pow(s, value)
+
+  //       value = Math.abs(value) * 256
+
+  //       data[ i + j * size + k * size * size ] = value
+  //     }
+  //   }
+  // }
+
+  console.log(data)
 
   return data
 
@@ -63,8 +139,8 @@ class CloudMaterial extends Material {
     }
 
     this.cfg = gl.state.config()
-    this.cfg.enableBlend()
-    this.cfg.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    // this.cfg.enableBlend()
+    // this.cfg.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
     this.vertexShader   = require('./_vshader.glsl')
     this.fragmentShader = require('./_fshader.glsl')
