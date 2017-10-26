@@ -13,9 +13,9 @@ void main() {
   vPosition   = aPosition;
   vTexCoord   = aTexCoord;
   vNoiseCoord = vec3(
-    aTexCoord.x,// + uTime * 0.25,
+    aTexCoord.x * (1. + cos(uTime * 0.25)) * 0.5,
     aTexCoord.y,
-    aZ// + uTime * 0.25
+    aZ + uTime * 0.25
   );
 
   float z = 2.;

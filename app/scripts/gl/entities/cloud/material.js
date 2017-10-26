@@ -11,7 +11,6 @@ const M4 = mat4.create()
 function perlin3(size) {
   const n   = []
   let value = 0
-  let index = 0
 
   for (let z = 0; z < size; z++) {
     n[z] = []
@@ -48,46 +47,61 @@ function smoothNoise(noise, x, y, z, size) {
    //smooth the noise with bilinear interpolation
    let value = 0.0
    value += fractX       * fractY       * fractZ * noise[z1][y1][x1]
-   value += (1 - fractX) * fractY       * fractZ * noise[z1][y1][x1]
-   value += (1 - fractX) * (1 - fractY) * fractZ * noise[z1][y1][x1]
+   value += (1 - fractX) * fractY       * fractZ * noise[z1][y1][x2]
+   value += fractX       * (1 - fractY) * fractZ * noise[z1][y2][x1]
+   value += (1 - fractX) * (1 - fractY) * fractZ * noise[z1][y2][x2]
 
-
-   value += (1 - fractX) * (1 - fractY) * fractZ * noise[y1][x2][z2]
-   value += (1 - fractX) * (1 - fractY) * fractZ * noise[y1][x2][z2]
-
-   value += fractX       * (1 - fractY) * noise[y2][x1]
-   value += (1 - fractX) * (1 - fractY) * noise[y2][x2]
+   value += fractX       * fractY       * (1 - fractZ) * noise[z2][y1][x1]
+   value += (1 - fractX) * fractY       * (1 - fractZ) * noise[z2][y1][x2]
+   value += fractX       * (1 - fractY) * (1 - fractZ) * noise[z2][y2][x1]
+   value += (1 - fractX) * (1 - fractY) * (1 - fractZ) * noise[z2][y2][x2]
 
    return value
+}
+
+function turbulence(noise, x, y, z, tsize, size) {
+  let value = 0
+  const initialSize = tsize
+
+  while(tsize > 1) {
+    value += smoothNoise(noise, x / tsize, y / tsize, z / tsize, size) * tsize
+    tsize *= 0.5
+  }
+
+  return (128 * value / initialSize)
 }
 
 
 function generate( size ) {
 
-  const scale = 1
+  const scale = 6
   const data  = new Uint8Array(size * size * size)
 
   const c = 150 / 256
   const s = 0.65
-
-  // size = 16
 
   const noise = perlin3( size )
 
   let value = 0
   let index = 0
 
-  console.log(noise)
-
   for (let z = 0; z < size; z++) {
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         index = z + y * size + x * size * size
-        value = noise[ parseInt(z * scale) ][ parseInt(y * scale) ][ parseInt(x * scale) ]
-        data[ index ] = Math.abs(value) * 256
+        value = turbulence( noise, x * scale, y * scale, z * scale, 64, size )
+        // value = 256 * smoothNoise( noise, x * scale, y * scale, z * scale, size )
+
+        // optim part
+        // value = value - 125
+        // value = 255 - Math.pow(255 * 0.93, value)
+
+        data[ index ] = value
       }
     }
   }
+
+  console.log( data )
 
   // const noise = perlin3( size, size, size, Math.random )
 
@@ -108,8 +122,6 @@ function generate( size ) {
   //     }
   //   }
   // }
-
-  console.log(data)
 
   return data
 
@@ -139,8 +151,8 @@ class CloudMaterial extends Material {
     }
 
     this.cfg = gl.state.config()
-    // this.cfg.enableBlend()
-    // this.cfg.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    this.cfg.enableBlend()
+    this.cfg.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
     this.vertexShader   = require('./_vshader.glsl')
     this.fragmentShader = require('./_fshader.glsl')

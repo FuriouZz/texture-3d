@@ -44,7 +44,7 @@ class Scene {
     this.cloud = new Cloud( this.renderer.gl )
     this.cloud.node.setScale(1)
     this.cloud.node.z = -5
-    // this.cloud.node.rotateY(Math.PI * -0.25)
+    this.cloud.node.rotateY(Math.PI * -0.15)
     this.node.add( this.cloud.node )
   }
 
