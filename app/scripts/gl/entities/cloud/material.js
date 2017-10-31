@@ -75,11 +75,11 @@ function turbulence(noise, x, y, z, tsize, size) {
 
 function generate( size ) {
 
-  const scale = 0.5
+  const scale = 0.6
   const data  = new Uint8Array(size * size * size)
 
-  const coverage  = 50
-  const sharpness = 0.98
+  const coverage  = 100
+  const sharpness = 0.93
 
   const noise = perlin3( size )
 
