@@ -64,7 +64,8 @@ function turbulence(noise, x, y, z, tsize, size) {
   const initialSize = tsize
 
   while(tsize > 1) {
-    value += smoothNoise(noise, x / tsize, y / tsize, z / tsize, size) * tsize
+    value += window.Noises.simplex3(x / tsize, y / tsize, z / tsize) * tsize
+    // value += smoothNoise(noise, x / tsize, y / tsize, z / tsize, size) * tsize
     tsize *= 0.5
   }
 
@@ -74,11 +75,11 @@ function turbulence(noise, x, y, z, tsize, size) {
 
 function generate( size ) {
 
-  const scale = 6
+  const scale = 0.5
   const data  = new Uint8Array(size * size * size)
 
-  const c = 150 / 256
-  const s = 0.65
+  const coverage  = 50
+  const sharpness = 0.98
 
   const noise = perlin3( size )
 
@@ -93,15 +94,18 @@ function generate( size ) {
         // value = 256 * smoothNoise( noise, x * scale, y * scale, z * scale, size )
 
         // optim part
-        // value = value - 125
-        // value = 255 - Math.pow(255 * 0.93, value)
+        const e = value - coverage
+        const d = 255 - 255 * Math.pow(sharpness, e)
+        value   = Math.max(0, d)
 
         data[ index ] = value
       }
     }
   }
 
+  window.DATA = data
   console.log( data )
+  console.log( data.length )
 
   // const noise = perlin3( size, size, size, Math.random )
 
@@ -145,14 +149,14 @@ class CloudMaterial extends Material {
 
     this.tMask = new Texture2D( gl, gl.RED, gl.UNSIGNED_BYTE, gl.R8 )
     const $img = new Image
-    $img.src   = 'assets/images/mask.jpg'
+    $img.src   = 'assets/images/mask2.jpg'
     $img.onload = () => {
       this.tMask.fromImage( $img )
     }
 
     this.cfg = gl.state.config()
     this.cfg.enableBlend()
-    this.cfg.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    this.cfg.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
     this.vertexShader   = require('./_vshader.glsl')
     this.fragmentShader = require('./_fshader.glsl')
@@ -166,8 +170,13 @@ class CloudMaterial extends Material {
 
     this.cfg.apply()
 
+    node.lookAt( camera.position )
+
     camera.modelViewProjectionMatrix( M4, node._wmatrix )
     this.uniform('uMVP', M4 )
+
+    this.uniform('uModelMatrix', node._wmatrix )
+    this.uniform('uCameraPosition', camera.position)
     this.uniform('uDiffuseColor', this.uDiffuseColor)
     this.uniform('tNoise', this.tNoise)
     this.uniform('tMask', this.tMask)

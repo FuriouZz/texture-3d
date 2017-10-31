@@ -99,7 +99,7 @@ BlenderController.prototype = {
   },
 
   _getMode: function( e ) {
-    // if (e.which !== 1) return
+    if (e.which !== 1) return
 
     if ( e.shiftKey ) {
       return MODE.PAN

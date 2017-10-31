@@ -24,7 +24,8 @@ class Scene {
     this.camera.lens.setAutoFov( 43.68 / 180 * Math.PI )
     this.camera.lens.aspect = this.width / this.height
     this.camera.lens.far    = 12000.
-    this.camera.z           = 1
+    this.camera.lens.near   = 0.0001
+    this.camera.z           = 5
     this.node.add( this.camera )
 
     this.cameraSwitcher = new CameraSwitcher( this.camera )
@@ -43,8 +44,9 @@ class Scene {
 
     this.cloud = new Cloud( this.renderer.gl )
     this.cloud.node.setScale(1)
-    this.cloud.node.z = -5
-    this.cloud.node.rotateY(Math.PI * -0.15)
+    this.cloud.node.x = 0
+    this.cloud.node.z = 0
+    // this.cloud.node.rotateY(Math.PI * -0.15)
     this.node.add( this.cloud.node )
   }
 
@@ -66,8 +68,10 @@ class Scene {
   }
 
   _onPreRender(dt, time, renderer) {
+    this.camera.updateViewProjectionMatrix( this.renderer.width, this.renderer.height )
     this.cameraSwitcher.update( dt )
 
+    // this.cloud.node.x+=0.01
     // this.cloud.node.rotateY(-0.01)
     this.cloud.preRender( dt, time, this )
   }

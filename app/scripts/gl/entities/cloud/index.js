@@ -4,7 +4,7 @@ const Mesh          = require('../../../engine/core/mesh')
 const CloudGeometry = require('./geometry')
 const CloudMaterial = require('./material')
 
-const SIZE = 64
+const SIZE = 128
 
 class Cloud extends Mesh {
 

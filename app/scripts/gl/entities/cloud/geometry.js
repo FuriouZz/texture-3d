@@ -4,11 +4,11 @@ const ArrayBuffer = require('nanogl/arraybuffer')
 const IndexBuffer = require('nanogl/indexbuffer')
 
 const POSITIONS = new Float32Array([
-  // pos     // uv
-  -1, -1, 0, 0, 0,
-  -1,  1, 0, 0, 1,
-   1, -1, 0, 1, 0,
-   1,  1, 0, 1, 1
+  // pos     // uv  // normal
+  -1, -1, 0, 0, 0,  0, 0, 1,
+  -1,  1, 0, 0, 1,  0, 0, 1,
+   1, -1, 0, 1, 0,  0, 0, 1,
+   1,  1, 0, 1, 1,  0, 0, 1
 ])
 
 const INDICES = new Uint8Array([
@@ -29,7 +29,7 @@ class RectangleGeometry {
 
     // Bind instancied attributes
     this.slices.attribPointer( program )
-    this.gl.vertexAttribDivisor(program[this.slices.attribs[0].name](), 1)
+    this.gl.vertexAttribDivisor(program[this.slices.attribs[0].name](), 2)
 
     // Bind index buffer
     this.indices.bind()
@@ -46,15 +46,17 @@ class RectangleGeometry {
 
     this.buffer.attrib( 'aPosition', 3, gl.FLOAT )
     this.buffer.attrib( 'aTexCoord', 2, gl.FLOAT )
+    this.buffer.attrib( 'aNormal'  , 3, gl.FLOAT )
 
     const data = new Float32Array(this.size)
-    for (let i = 0; i < this.size; i++) {
-      data[i] = i / this.size
+    for (let i = 0; i < this.size*2; i+=2) {
+      data[i+0] = i / this.size
+      data[i+1] = Math.random() * 2
     }
 
     this.slices = new ArrayBuffer( gl )
     this.slices.data( data )
-    this.slices.attrib( 'aZ', 1, gl.FLOAT )
+    this.slices.attrib( 'iDepth', 2, gl.FLOAT )
   }
 
   deallocate() {

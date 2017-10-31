@@ -16,7 +16,7 @@ void main( void ) {
   float noise = texture( tNoise, vNoiseCoord ).r;
   float mask  = texture( tMask , vTexCoord   ).r;
 
-  float alpha = (noise + 0.0) * mask;
+  float alpha = noise * mask;
   vec3 color  = uDiffuseColor * alpha;
   fragColor   = vec4(color, alpha * 1.0);
 
